@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+
+<meta charset="utf-8">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta name="generator" content="pandoc" />
+
+<meta name="author" content="Balvín, P., Vizina, A., Nesládková, M. a kolektiv" />
+
+
+<title>Výpočet hodnoty MZP</title>
+
+</head>
+
+<body>
+
+<style type="text/css">
+.main-container {
+  max-width: 940px;
+  margin-left: auto;
+  margin-right: auto;
+}
+code {
+  color: inherit;
+  background-color: rgba(0, 0, 0, 0.04);
+}
+img { 
+  max-width:100%; 
+  height: auto; 
+}
+
+html {
+    font-family: sans-serif;
+}
+body {
+    margin: 0;
+}
+article, aside, details, figcaption, figure, footer, header, hgroup, main, menu, nav, section, summary {
+    display: block;
+}
+a {
+    background-color: transparent;
+}
+a:active, a:hover {
+    outline: 0 none;
+}
+abbr[title] {
+    border-bottom: 1px dotted;
+}
+b, strong {
+    font-weight: 700;
+}
+dfn {
+    font-style: italic;
+}
+h1 {
+    font-size: 2em;
+    margin: 0.67em 0;
+}
+mark {
+    background: none repeat scroll 0 0 #ff0;
+    color: #000;
+}
+small {
+    font-size: 80%;
+}
+sub, sup {
+    font-size: 75%;
+    line-height: 0;
+    position: relative;
+    vertical-align: baseline;
+}
+sup {
+    top: -0.5em;
+}
+sub {
+    bottom: -0.25em;
+}
+img {
+    border: 0 none;
+}
+svg:not(:root) {
+    overflow: hidden;
+}
+figure {
+    margin: 1em 40px;
+}
+hr {
+    box-sizing: content-box;
+    height: 0;
+}
+pre {
+    overflow: auto;
+}
+code, kbd, pre, samp {
+    font-family: monospace,monospace;
+    font-size: 1em;
+}
+button, input, optgroup, select, textarea {
+    color: inherit;
+    font: inherit;
+    margin: 0;
+}
+button {
+    overflow: visible;
+}
+button, select {
+    text-transform: none;
+}
+button, html input[type="button"], input[type="reset"], input[type="submit"] {
+    cursor: pointer;
+}
+button[disabled], html input[disabled] {
+    cursor: default;
+}
+button::-moz-focus-inner, input::-moz-focus-inner {
+    border: 0 none;
+    padding: 0;
+}
+input {
+    line-height: normal;
+}
+input[type="checkbox"], input[type="radio"] {
+    box-sizing: border-box;
+    padding: 0;
+}
+input[type="search"] {
+    box-sizing: content-box;
+}
+fieldset {
+    border: 1px solid silver;
+    margin: 0 2px;
+    padding: 0.35em 0.625em 0.75em;
+}
+legend {
+    border: 0 none;
+    padding: 0;
+}
+textarea {
+    overflow: auto;
+}
+optgroup {
+    font-weight: 700;
+}
+table {
+    border-collapse: collapse;
+    border-spacing: 0;
+}
+td, th {
+    padding: 0;
+}
+a, a:visited {
+    text-decoration: underline;
+}
+a[href]::after {
+    content: " (" attr(href) ")";
+}
+abbr[title]::after {
+    content: " (" attr(title) ")";
+}
+a[href^="#"]::after, a[href^="javascript:"]::after {
+    content: "";
+}
+pre, blockquote {
+    border: 1px solid #999;
+    page-break-inside: avoid;
+}
+thead {
+    display: table-header-group;
+}
+tr, img {
+    page-break-inside: avoid;
+}
+img {
+    max-width: 100% !important;
+}
+p, h2, h3 {
+    orphans: 3;
+    widows: 3;
+}
+h2, h3 {
+    page-break-after: avoid;
+}
+select {
+    background: none repeat scroll 0 0 #fff !important;
+}
+.navbar {
+    display: none;
+}
+.btn > .caret, .dropup > .btn > .caret {
+    border-top-color: #000 !important;
+}
+.label {
+    border: 1px solid #000;
+}
+.table {
+    border-collapse: collapse !important;
+}
+.table td, .table th {
+    background-color: #fff !important;
+}
+.table-bordered th, .table-bordered td {
+    border: 1px solid #ddd !important;
+}
+}
+* {
+    box-sizing: border-box;
+}
+*::before, *::after {
+    box-sizing: border-box;
+}
+html {
+    font-size: 10px;
+}
+body {
+    background-color: #fff;
+    color: #333;
+    font-family: "Helvetica Neue",Helvetica,Arial,sans-serif;
+    font-size: 14px;
+    line-height: 1.42857;
+}
+input, button, select, textarea {
+    font-family: inherit;
+    font-size: inherit;
+    line-height: inherit;
+}
+a {
+    color: #337ab7;
+    text-decoration: none;
+}
+a:hover, a:focus {
+    color: #23527c;
+    text-decoration: underline;
+}
+a:focus {
+    outline: thin dotted;
+    outline-offset: -2px;
+}
+figure {
+    margin: 0;
+}
+img {
+    vertical-align: middle;
+}
+.img-responsive, .thumbnail > img, .thumbnail a > img, .carousel-inner > .item > img, .carousel-inner > .item > a > img {
+    display: block;
+    height: auto;
+    max-width: 100%;
+}
+.img-rounded {
+    border-radius: 6px;
+}
+.img-thumbnail {
+    background-color: #fff;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    display: inline-block;
+    height: auto;
+    line-height: 1.42857;
+    max-width: 100%;
+    padding: 4px;
+    transition: all 0.2s ease-in-out 0s;
+}
+.img-circle {
+    border-radius: 50%;
+}
+hr {
+    -moz-border-bottom-colors: none;
+    -moz-border-left-colors: none;
+    -moz-border-right-colors: none;
+    -moz-border-top-colors: none;
+    border-color: #eee -moz-use-text-color -moz-use-text-color;
+    border-image: none;
+    border-right: 0 none;
+    border-style: solid none none;
+    border-width: 1px 0 0;
+    margin-bottom: 20px;
+    margin-top: 20px;
+}
+.sr-only {
+    border: 0 none;
+    clip: rect(0px, 0px, 0px, 0px);
+    height: 1px;
+    margin: -1px;
+    overflow: hidden;
+    padding: 0;
+    position: absolute;
+    width: 1px;
+}
+.sr-only-focusable:active, .sr-only-focusable:focus {
+    clip: auto;
+    height: auto;
+    margin: 0;
+    overflow: visible;
+    position: static;
+    width: auto;
+}
+h1, h2, h3, h4, h5, h6, .h1, .h2, .h3, .h4, .h5, .h6 {
+    color: inherit;
+    font-family: inherit;
+    font-weight: 500;
+    line-height: 1.1;
+}
+h1 small, h2 small, h3 small, h4 small, h5 small, h6 small, .h1 small, .h2 small, .h3 small, .h4 small, .h5 small, .h6 small, h1 .small, h2 .small, h3 .small, h4 .small, h5 .small, h6 .small, .h1 .small, .h2 .small, .h3 .small, .h4 .small, .h5 .small, .h6 .small {
+    color: #777;
+    font-weight: 400;
+    line-height: 1;
+}
+h1, .h1, h2, .h2, h3, .h3 {
+    margin-bottom: 10px;
+    margin-top: 20px;
+}
+h1 small, .h1 small, h2 small, .h2 small, h3 small, .h3 small, h1 .small, .h1 .small, h2 .small, .h2 .small, h3 .small, .h3 .small {
+    font-size: 65%;
+}
+h4, .h4, h5, .h5, h6, .h6 {
+    margin-bottom: 10px;
+    margin-top: 10px;
+}
+h4 small, .h4 small, h5 small, .h5 small, h6 small, .h6 small, h4 .small, .h4 .small, h5 .small, .h5 .small, h6 .small, .h6 .small {
+    font-size: 75%;
+}
+h1, .h1 {
+    font-size: 36px;
+}
+h2, .h2 {
+    font-size: 30px;
+}
+h3, .h3 {
+    font-size: 24px;
+}
+h4, .h4 {
+    font-size: 18px;
+}
+h5, .h5 {
+    font-size: 14px;
+}
+h6, .h6 {
+    font-size: 12px;
+}
+p {
+    margin: 0 0 10px;
+}
+</style>
+<div class="container-fluid main-container">
+
+
+<div id="header">
+<h1 class="title">Výpočet hodnoty MZP</h1>
+<h4 class="author"><em>Balvín, P., Vizina, A., Nesládková, M. a kolektiv</em></h4>
+</div>
+
+
+<hr />
+<p>Metodika stanovení minimálních zůstatkových průtoků byla zpracována na základě požadavků MŽP ČR a slouží jako podklad pro zpracování nařízení vlády. V metodice byly zohledněny biologické potřeby ryb a makrozoobentosu, hydrogeologické poměry České republiky a především hydrologická variabilita.</p>
+<hr />
+<p>V první záložce je možné vypočítat hodnotu navrhovaného minimálního zůstatkového průtoku (<em>MZP</em>) a porovnat se současnou hodnotou <em>MZP</em>. Pro výpočet je potřeba vyplnit pole, do které kategorie (I-IV) daný profil spadá, a zdali se jedná o <em>MZP</em> v hlavní (léto) nebo vedlejší (zima) sezóně. Do pole Q330 je potřeba vyplnit hodnotu Q330, z které se daný <em>MZP</em> počítá. Pro výpočet současné hodnoty <em>MZP</em> je potřeba zadat hodnoty Q355 a Q364. Po zadání hodnot je automaticky proveden výpočet a pod záložkou <em>Hodnota MZP</em> jsou dvě hodnoty. První udává hodnotu navrhovaného <em>MZP</em> a druhá hodnotu současného <em>MZP</em>. V záložce graf jsou obě vykresleny (modrý bod-současný, červený bod-navrhovaný). Křivka nám ukazuje navrhovanou hodnotu <em>MZP</em> pro okolní průtoky Q330.</p>
+<hr />
+<iframe src="http://bilan.vuv.cz/shiny/mzp/mzp/" style="width: 100%; height: 525px; border: 0px"></iframe>
+
+<hr />
+<p>Procentuální rozdíl mezi starou hodnotou minimálního zůstatkového průtoku a novou hodnotou pro hlavní sezónu je zobrazen v záložce <em>Graf starý/nový</em>. Graf je rozdělen do jednotlivých kategorií.</p>
+<p><em>Graf poměr</em> Poměr Q330 ku 50procentnímu kvantilu v hlavní sezóně, bodové hodnoty pro jednotlivá povodí.</p>
+<p><em>GIS I</em> Poměr Q330 ku 50procentnímu kvantilu v hlavní sezóně.</p>
+<p><em>GIS II</em> Poměr Q330 ku 50procentnímu kvantilu ve vedlejší sezóně.</p>
+<p><em>GIS III</em> procentuální rozdíl v hlavní sezóně ku staré hodnotě MZP.</p>
+<p><em>GIS IV</em> procentuální rozdíl ve vedlejší sezóně ku staré hodnotě MZP</p>
+<iframe src="http://bilan.vuv.cz/shiny/mzp/mzp_gis/" style="width: 100%; height: 750px; border: 0px"></iframe>
+
+<hr />
+
+
+</div>
+
+</body>
+</html>
