@@ -1,13 +1,7 @@
 library(shiny)
 library(data.table)
 
-# Define server logic for random distribution application
 shinyServer(function(input, output) {
-  
-  # Reactive expression to generate the requested distribution. This is 
-  # called whenever the inputs change. The output functions defined 
-  # below then all use the value computed from this expression
-  
   data <- reactive({
     dist <- switch(input$kat,
                    jedna = 1,
@@ -28,31 +22,12 @@ shinyServer(function(input, output) {
     
     })
   
-#   data <- reactive({
-#     dist <- switch(input$kat,
-#                    norm = rnorm,
-#                    unif = runif,
-#                    lnorm = rlnorm,
-#                    exp = rexp,
-#                    rnorm)
-#     
-#     dist(input$n)
-#   })
-#   
-  # Generate a plot of the data. Also uses the inputs to build the 
-  # plot label. Note that the dependencies on both the inputs and
-  # the data reactive expression are both tracked, and all expressions 
-  # are called in the sequence implied by the dependency graph
   output$plot <- renderPlot({
     kat <- input$kat
     X330 = q330 <- input$n
     obd = input$rok
     X355<- input$nn
     X364<- input$nnn
-    
-    #X355=0.02
-    #X330=0.5
-    #X364=4
     
     old=data.table(X355)
     
@@ -76,8 +51,6 @@ shinyServer(function(input, output) {
     if (kat==4 & obd==22) mzp=((q330^exponent)^exponent1)*1
     
     rada=seq((q330-0.9*q330),(q330+0.9*q330),by=q330/50)
-    
-    #length(rada)
     
     mzp1=rep(0,91)
     
@@ -106,11 +79,8 @@ shinyServer(function(input, output) {
     points(q330,mzp, col='red',lwd=2)
     points(q330,bod,col='dark blue', lwd=2)
     grid()
-    #hist(data(), 
-      #   main=paste('r', dist, '(', n, ')', sep=''))
   })
   
-  # Generate a summary of the data
   output$summary <- renderPrint({
     
     kat <- input$kat
@@ -119,10 +89,6 @@ shinyServer(function(input, output) {
     exponent=0.85
     X355<- input$nn
     X364<- input$nnn
-    
-    #X355=0.02
-    #X330=0.5
-    #X364=4
     
     old=data.table(X355)
     
@@ -145,10 +111,4 @@ shinyServer(function(input, output) {
     bod=old$MZPold
     print(c(mzp,bod))
   })
-  
-  # Generate an HTML table view of the data
-#   output$table <- renderTable({
-#     data.frame(x=data())
-#   })
-  
 })
