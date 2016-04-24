@@ -3,46 +3,39 @@ library(data.table)
 library(ggplot2)
 library(rgdal)
 
+calc_mzp <- function(q330, kat, obd, exponent, exponent2) {
+    coeffs = list(leto = c(0.65, 0.8, 0.85, 0.9), zima = c(0.85, 1, 1, 1))
+    season = "leto"
+    if (obd == 22)
+        season = "zima"
+    return(((q330^exponent)^exponent2)*coeffs[[season]][as.numeric(kat)])
+}
+
 shinyServer(function(input, output) {
-  output$plot <- renderPlot({
+new_mzp <- reactive({ calc_mzp(input$n, input$kat, input$rok, input$expo, input$expo2) })
+old_mzp <- reactive({
+    X330 <- input$n
+    X355 <- input$nn
+    X364 <- input$nnn
+
+    if (X355 < 0.05) return(X330)
+    else if (X355 < 0.5) return((X330 + X355) * 0.5)
+    else if (X355 < 5) return(X355)
+    else return((X355 + X364) * 0.5)
+})
+
+output$plot <- renderPlot({
     kat <- input$kat
-    X330 = q330 <- input$n
+    q330 <- input$n
     obd = input$rok
     exponent= input$expo
     exponent1= input$expo2
     
-    X355<- input$nn
-    X364<- input$nnn
-    
-    old=data.table(X355)
-    
-    old[X355<0.05, MZPold:=X330]
-    old[X355>0.05 & X355<0.5, MZPold:=(X330+X355)*0.5]
-    old[X355>0.5 & X355<5, MZPold:=X355]
-    old[X355>5, MZPold:=(X355+X364)*0.5]
-    
-    
     if (q330<1) exponent1=1.09 else exponent1=1
-    
-    
-    if (kat==1 & obd==11) mzp=((q330^exponent)^exponent1)*0.65
-    if (kat==1 & obd==22) mzp=((q330^exponent)^exponent1)*0.85
-    if (kat==2 & obd==11) mzp=((q330^exponent)^exponent1)*0.8
-    if (kat==2 & obd==22) mzp=((q330^exponent)^exponent1)*1
-    if (kat==3 & obd==11) mzp=((q330^exponent)^exponent1)*.8
-    if (kat==3 & obd==22) mzp=((q330^exponent)^exponent1)*1
-    if (kat==4 & obd==11) mzp=((q330^exponent)^exponent1)*.9
-    if (kat==4 & obd==22) mzp=((q330^exponent)^exponent1)*1
+    mzp = calc_mzp(q330, kat, obd, exponent, exponent1)
     
     exponent=0.85
-    if (kat==1 & obd==11) mzp3=((q330^exponent)^exponent1)*0.65
-    if (kat==1 & obd==22) mzp3=((q330^exponent)^exponent1)*0.85
-    if (kat==2 & obd==11) mzp3=((q330^exponent)^exponent1)*0.8
-    if (kat==2 & obd==22) mzp3=((q330^exponent)^exponent1)*1
-    if (kat==3 & obd==11) mzp3=((q330^exponent)^exponent1)*.85
-    if (kat==3 & obd==22) mzp3=((q330^exponent)^exponent1)*1
-    if (kat==4 & obd==11) mzp3=((q330^exponent)^exponent1)*.9
-    if (kat==4 & obd==22) mzp3=((q330^exponent)^exponent1)*1
+    mzp3 = calc_mzp(q330, kat, obd, exponent, exponent1)
     
     rada=seq((q330-0.9*q330),(q330+0.9*q330),by=q330/50)
     
@@ -51,34 +44,14 @@ shinyServer(function(input, output) {
     
     for (i in 1:91)
     {
+        mzp1[i] = calc_mzp(rada[i], kat, obd, input$expo, input$expo2)
     
-      exponent= input$expo
-      exponent1= input$expo2
-      
-    if (kat==1 & obd==11) mzp1[i]=(((rada[i])^exponent)^exponent1)*0.65
-    if (kat==1 & obd==22) mzp1[i]=(((rada[i])^exponent)^exponent1)*0.85
-    if (kat==2 & obd==11) mzp1[i]=(((rada[i])^exponent)^exponent1)*0.8
-    if (kat==2 & obd==22) mzp1[i]=(((rada[i])^exponent)^exponent1)*1
-    if (kat==3 & obd==11) mzp1[i]=(((rada[i])^exponent)^exponent1)*.85
-    if (kat==3 & obd==22) mzp1[i]=(((rada[i])^exponent)^exponent1)*1
-    if (kat==4 & obd==11) mzp1[i]=(((rada[i])^exponent)^exponent1)*.9
-    if (kat==4 & obd==22) mzp1[i]=(((rada[i])^exponent)^exponent1)*1
-    
-    if (rada[i]<1) exponent1=1.09 else exponent1=1
-    exponent=0.85
-    
-    if (kat==1 & obd==11) mzp2[i]=(((rada[i])^exponent)^exponent1)*0.65
-    if (kat==1 & obd==22) mzp2[i]=(((rada[i])^exponent)^exponent1)*0.85
-    if (kat==2 & obd==11) mzp2[i]=(((rada[i])^exponent)^exponent1)*0.8
-    if (kat==2 & obd==22) mzp2[i]=(((rada[i])^exponent)^exponent1)*1
-    if (kat==3 & obd==11) mzp2[i]=(((rada[i])^exponent)^exponent1)*.85
-    if (kat==3 & obd==22) mzp2[i]=(((rada[i])^exponent)^exponent1)*1
-    if (kat==4 & obd==11) mzp2[i]=(((rada[i])^exponent)^exponent1)*.9
-    if (kat==4 & obd==22) mzp2[i]=(((rada[i])^exponent)^exponent1)*1
-        
+        if (rada[i]<1) exponent1=1.09 else exponent1=1
+        exponent=0.85
+        mzp2[i] = calc_mzp(rada[i], kat, obd, exponent, exponent1)
     }
     
-    bod=old$MZPold
+    bod = old_mzp()
     
     plot(rada, mzp1, type='l', lty=2, lwd=2, xlab='Q330', ylab='MZP',ylim=c(0,max(mzp1)))
     abline(coef=c(mzp3,0), col='red',lwd=0.7, lty=3)
@@ -91,13 +64,11 @@ shinyServer(function(input, output) {
   })
   
 output$plot2 <- renderPlot({
-  #kat <- input$kat
   q330 <- input$n
   obd = input$rok
   kor1= input$expo
   kor= input$expo2
   
-  #setwd('/media//Windows7_OS_/vizina/')
   newdta=as.data.table(read.table('MINprutoky/chmu_stat2.dat', header=TRUE))
   newdta[,K99:=X99/X50]
 #   newdta[K99>0.15, KAT:=2]
@@ -153,7 +124,6 @@ output$plot3 <- renderPlot({
   kor1= input$expo
   kor= input$expo2
   
-  #newdta=as.data.table(read.table('/media//Windows7_OS_/vizina/MINprutoky/chmu_stat2.dat', header=TRUE))
   newdta=as.data.table(read.table('MINprutoky/chmu_stat2.dat', header=TRUE))
   newdta[,K99:=X99/X50]
 #   newdta[K99>0.15, KAT:=2]
@@ -302,36 +272,12 @@ output$plot4 <- renderPlot({
   B=na.omit(B)
   B[, MP:=1]
   
-  #  pokus=povo_kat[, allow.cartesian=TRUE]
-  #setwd('/home//adam/Dropbox/R/alfa zprava/metodika/gis/')
-  #voda=readShapePoly('vodni_plochy')
-  #hranice=readShapePoly('/home//adam/Dropbox/R/alfa zprava/metodika/gis/hranice')
-  #hranice=readShapePoly('gis/','hranice')
-  
   hranice = readOGR('gis/','cr_sjtsk')
   povo_kat = readOGR('gis/','reg_adam2')
 povo_kat=fortify(povo_kat)
-#   povo_kat = krov2wgs(povo_kat)
-#   povo_kat=spTransform(povo_kat,)
-#   povo_kat=data.table(povo_kat@data)
-#   povo_kat=data.table(fortify(povo_kat))
-# source('/home//adam//Dropbox/R/!!functions/HMCR/krov2wgs.r')
-
-#hranice=spTrans(hranice, from="s42", to="wgs")
-
-
-
-#  plot(povo_kat)
-#  plot(povo_bod,add=TRUE)
-#  plot(hranice,add=TRUE,col="red")
 
   mp = B[, MP[1]]  
   d = B
-  #rng = B[, range(z_dv_st)]
-  #val = seq(0,1000, length=5)+mp
-  
-# povo_kat1=povo_kat[povo_kat$kategorie=='1',]
-# plot(povo_kat1)
 
   ggplot(d) + 
     geom_point(aes(x=X_COORD, y=Y_COORD,shape = factor(KAT)), colour='black', size=5.5,alpha=0.21)+
@@ -343,7 +289,6 @@ povo_kat=fortify(povo_kat)
     ylab('lat') + 
     theme_minimal() +
     coord_fixed()+
-    #theme(legend.position="none")+
     geom_polygon(aes(x=long, y = lat), data = hranice, fill = NA, col='grey',lwd=0.3)+
     geom_polygon(aes(x=long, y = lat, group=group), fill=povo_kat$group, data = povo_kat, col='red',lwd=0.3,alpha=0.1)
   
@@ -355,10 +300,6 @@ output$plot5 <- renderPlot({
   kor1= input$expo
   kor= input$expo2
   
-#  kor1=0.85
-#  kor=1.09
-  
-  #newdta=as.data.table(read.table('/media//Windows7_OS_/vizina/MINprutoky/chmu_stat2.dat', header=TRUE))
   newdta=as.data.table(read.table('MINprutoky/chmu_stat2.dat', header=TRUE))
   newdta[,K99:=X99/X50]
   
@@ -405,7 +346,6 @@ output$plot5 <- renderPlot({
   library('rgdal')
   library('maptools')
   
-  #povo_bod = readOGR('/media//Windows7_OS_/vizina/gis/hydro data/dib_E04_Vodomerne_stanice/','E04_Vodomerne_stanice')
   povo_bod = readOGR('gis/','E04_Vodomerne_stanice')
   povo_kat = readOGR('gis/','reg_adam2')
   povo_kat=fortify(povo_kat)
@@ -463,10 +403,6 @@ output$plot6 <- renderPlot({
   kor1= input$expo
   kor= input$expo2
   
-#  kor1=0.85
-#  kor=1.09
-  
-  #newdta=as.data.table(read.table('/media//Windows7_OS_/vizina/MINprutoky/chmu_stat2.dat', header=TRUE))
   newdta=as.data.table(read.table('MINprutoky/chmu_stat2.dat', header=TRUE))
   newdta[,K99:=X99/X50]
   
@@ -671,23 +607,7 @@ output$plot7 <- renderPlot({
   
 })
 
-  output$summary <- renderPrint({
-    
-    kat <- input$kat
-    q330 <- input$n
-    obd = input$rok
-    exponent= input$expo
-    exponent1= input$expo2
-    
-    if (kat==1 & obd==11) mzp=((q330^exponent)^exponent1)*0.65
-    if (kat==1 & obd==22) mzp=((q330^exponent)^exponent1)*0.85
-    if (kat==2 & obd==11) mzp=((q330^exponent)^exponent1)*0.8
-    if (kat==2 & obd==22) mzp=((q330^exponent)^exponent1)*1
-    if (kat==3 & obd==11) mzp=((q330^exponent)^exponent1)*.85
-    if (kat==3 & obd==22) mzp=((q330^exponent)^exponent1)*1
-    if (kat==4 & obd==11) mzp=((q330^exponent)^exponent1)*.9
-    if (kat==4 & obd==22) mzp=((q330^exponent)^exponent1)*1
-    
-    print(mzp)
-  })
+output$summary <- renderPrint({
+    print(new_mzp())
+})
 })

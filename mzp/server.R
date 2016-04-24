@@ -1,94 +1,45 @@
 library(shiny)
 library(data.table)
 
+calc_mzp <- function(q330, kat, obd) {
+    coeffs = list(leto = c(0.65, 0.8, 0.85, 0.9), zima = c(0.85, 1, 1, 1))
+    season = "leto"
+    if (obd == 22)
+        season = "zima"
+    exponent = 0.85
+    if (q330<1) exponent2=1.09 else exponent2=1
+    return(((q330^exponent)^exponent2)*coeffs[[season]][as.numeric(kat)])
+}
+
 shinyServer(function(input, output) {
+new_mzp <- reactive({ calc_mzp(input$n, input$kat, input$rok) })
+old_mzp <- reactive({
+    X330 <- input$n
+    X355 <- input$nn
+    X364 <- input$nnn
+
+    if (X355 < 0.05) return(X330)
+    else if (X355 < 0.5) return((X330 + X355) * 0.5)
+    else if (X355 < 5) return(X355)
+    else return((X355 + X364) * 0.5)
+})
+
   output$plot <- renderPlot({
-    kat <- input$kat
-    X330 = q330 <- input$n
-    obd = input$rok
-    X355<- input$nn
-    X364<- input$nnn
-    
-    old=data.table(X355)
-    
-    old[X355<0.05, MZPold:=X330]
-    old[X355>0.05 & X355<0.5, MZPold:=(X330+X355)*0.5]
-    old[X355>0.5 & X355<5, MZPold:=X355]
-    old[X355>5, MZPold:=(X355+X364)*0.5]
-    
-    exponent=0.85
-    
-    if (q330<1) exponent1=1.09 else exponent1=1
-    
-    
-    if (kat==1 & obd==11) mzp=((q330^exponent)^exponent1)*0.65
-    if (kat==1 & obd==22) mzp=((q330^exponent)^exponent1)*0.85
-    if (kat==2 & obd==11) mzp=((q330^exponent)^exponent1)*0.8
-    if (kat==2 & obd==22) mzp=((q330^exponent)^exponent1)*1
-    if (kat==3 & obd==11) mzp=((q330^exponent)^exponent1)*.85
-    if (kat==3 & obd==22) mzp=((q330^exponent)^exponent1)*1
-    if (kat==4 & obd==11) mzp=((q330^exponent)^exponent1)*.9
-    if (kat==4 & obd==22) mzp=((q330^exponent)^exponent1)*1
+    q330 <- input$n
+    mzp = new_mzp()
     
     rada=seq((q330-0.9*q330),(q330+0.9*q330),by=q330/50)
-    
     mzp1=rep(0,91)
-    
-    for (i in 1:91)
-    {
-    
-      exponent=0.85
-      
-      if (rada[i]<1) exponent1=1.09 else exponent1=1
-      
-      
-    if (kat==1 & obd==11) mzp1[i]=(((rada[i])^exponent)^exponent1)*0.65
-    if (kat==1 & obd==22) mzp1[i]=(((rada[i])^exponent)^exponent1)*0.85
-    if (kat==2 & obd==11) mzp1[i]=(((rada[i])^exponent)^exponent1)*0.8
-    if (kat==2 & obd==22) mzp1[i]=(((rada[i])^exponent)^exponent1)*1
-    if (kat==3 & obd==11) mzp1[i]=(((rada[i])^exponent)^exponent1)*.85
-    if (kat==3 & obd==22) mzp1[i]=(((rada[i])^exponent)^exponent1)*1
-    if (kat==4 & obd==11) mzp1[i]=(((rada[i])^exponent)^exponent1)*.9
-    if (kat==4 & obd==22) mzp1[i]=(((rada[i])^exponent)^exponent1)*1
-    }
-    
-    bod=old$MZPold
+    mzp1 = sapply(rada, calc_mzp, input$kat, input$rok)
     
     plot(rada, mzp1, type='l', lty=2, lwd=2, xlab='Q330', ylab='MZP')
     abline(coef=c(mzp,0), col='red',lwd=1, lty=3)
     points(q330,mzp, col='red',lwd=2)
-    points(q330,bod,col='dark blue', lwd=2)
+    points(q330, old_mzp(), col='dark blue', lwd=2)
     grid()
-  })
+})
   
-  output$summary <- renderPrint({
-    
-    kat <- input$kat
-    X330=q330 <- input$n
-    obd = input$rok
-    exponent=0.85
-    X355<- input$nn
-    X364<- input$nnn
-    
-    old=data.table(X355)
-    
-    old[X355<0.05, MZPold:=X330]
-    old[X355>0.05 & X355<0.5, MZPold:=(X330+X355)*0.5]
-    old[X355>0.5 & X355<5, MZPold:=X355]
-    old[X355>5, MZPold:=(X355+X364)*0.5]
-    
-    if (q330<1) exponent1=1.09 else exponent1=1
-    
-    if (kat==1 & obd==11) mzp=((q330^exponent)^exponent1)*0.65
-    if (kat==1 & obd==22) mzp=((q330^exponent)^exponent1)*0.85
-    if (kat==2 & obd==11) mzp=((q330^exponent)^exponent1)*0.8
-    if (kat==2 & obd==22) mzp=((q330^exponent)^exponent1)*1
-    if (kat==3 & obd==11) mzp=((q330^exponent)^exponent1)*.85
-    if (kat==3 & obd==22) mzp=((q330^exponent)^exponent1)*1
-    if (kat==4 & obd==11) mzp=((q330^exponent)^exponent1)*.9
-    if (kat==4 & obd==22) mzp=((q330^exponent)^exponent1)*1
-    
-    bod=old$MZPold
-    print(c(mzp,bod))
-  })
+output$summary <- renderPrint({
+    print(c(new_mzp(), old_mzp()))
+})
 })
