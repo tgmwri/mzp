@@ -4,26 +4,6 @@ library(ggplot2)
 library(rgdal)
 
 shinyServer(function(input, output) {
-  data <- reactive({
-    dist <- switch(input$kat,
-                   jedna = 1,
-                   dva = 2,
-                   tri = 3,
-                   ctyr = 4,
-                   rnorm)
-    
-    dist(input$n)
-  })
-  
-  data <- reactive({
-    dist <- switch(input$rok,
-                   leto = 11,
-                   zima = 22,
-                   rnorm)
-    dist(input$n)
-    
-    })
-  
   output$plot <- renderPlot({
     kat <- input$kat
     X330 = q330 <- input$n
