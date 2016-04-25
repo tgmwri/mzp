@@ -105,22 +105,31 @@ output$plot <- renderPlot({
     
     grid()
   })
-  
-output$plot2 <- renderPlot({
+
+plot_data <- reactive({
   newdta=as.data.table(read.table('MINprutoky/chmu_stat2.dat', header=TRUE))
   newdta[,K99:=X99/X50]
   newdta[, MZPleto := round(calc_mzp(X330, KAT, "leto", input$expo, input$expo2), 3)]
   newdta[, MZPzima := round(calc_mzp(X330, KAT, "zima", input$expo, input$expo2), 3)]
   newdta[,pomer:=(MZPleto/X50)*100]
-  
+  newdta[,pomer_zima:=(MZPzima/X50)*100]
+
   newdta[, MZPold := calc_old_mzp(X330, X355, X364)]
-  
+
   newdta[,rozdil_hlavni:=MZPleto-MZPold]
   newdta[,rozdil_jaro:=MZPzima-MZPold]
   newdta[,rozdil_proc_hlav:=(rozdil_hlavni/MZPold)*100]
   newdta[,rozdil_proc_jaro:=(rozdil_jaro/MZPold)*100]
+
+  newdta[, MZPleto1 := round(calc_mzp(X330, KAT, "leto", 0.85, 1.09), 3)]
+  newdta[, MZPzima1 := round(calc_mzp(X330, KAT, "zima", 0.85, 1.09), 3)]
+  newdta[,pomer1:=(MZPleto1/X50)*100]
+
+  return(newdta)
+})
   
-  ggplot(newdta,aes(factor=KAT))+
+output$plot2 <- renderPlot({
+  ggplot(plot_data(), aes(factor=KAT))+
     geom_boxplot(aes(x=KAT,y=rozdil_proc_hlav, group=KAT))+
     xlab('Kategorie')+
     ylab('Změna [%]')+
@@ -128,19 +137,7 @@ output$plot2 <- renderPlot({
 })
 
 output$plot3 <- renderPlot({
-  newdta=as.data.table(read.table('MINprutoky/chmu_stat2.dat', header=TRUE))
-  newdta[,K99:=X99/X50]
-  newdta[, MZPleto := round(calc_mzp(X330, KAT, "leto", input$expo, input$expo2), 3)]
-  newdta[, MZPzima := round(calc_mzp(X330, KAT, "zima", input$expo, input$expo2), 3)]
-  newdta[,pomer:=(MZPleto/X50)*100]
-
-  newdta[, MZPold := calc_old_mzp(X330, X355, X364)]
-  
-  newdta[, MZPleto1 := round(calc_mzp(X330, KAT, "leto", 0.85, 1.09), 3)]
-  newdta[, MZPzima1 := round(calc_mzp(X330, KAT, "zima", 0.85, 1.09), 3)]
-  newdta[,pomer1:=(MZPleto1/X50)*100]
-
-  ggplot(newdta,aes(factor=KAT))+
+  ggplot(plot_data(), aes(factor=KAT))+
     geom_point(aes(x=X330,y=pomer1, group=KAT,alpha=0.5), colour='dark blue')+
     geom_point(aes(x=X330,y=pomer, group=KAT), colour = 'red' ,alpha=0.5)+
     ylim(0,100)+
@@ -151,80 +148,19 @@ output$plot3 <- renderPlot({
 })
 
 output$plot4 <- renderPlot({
-  newdta=as.data.table(read.table('MINprutoky/chmu_stat2.dat', header=TRUE))
-  newdta[,K99:=X99/X50]
-  newdta[, MZPleto := round(calc_mzp(X330, KAT, "leto", input$expo, input$expo2), 3)]
-  newdta[, MZPzima := round(calc_mzp(X330, KAT, "zima", input$expo, input$expo2), 3)]
-  newdta[,pomer:=(MZPleto/X50)*100]
-
-  newdta[, MZPold := calc_old_mzp(X330, X355, X364)]
-  
-  newdta[, MZPleto1 := round(calc_mzp(X330, KAT, "leto", 0.85, 1.09), 3)]
-  newdta[, MZPzima1 := round(calc_mzp(X330, KAT, "zima", 0.85, 1.09), 3)]
-  newdta[,pomer1:=(MZPleto1/X50)*100]
-  
-  plot_map(newdta, "pomer", "Poměr")
+    plot_map(plot_data(), "pomer", "Poměr")
 })
 
 output$plot5 <- renderPlot({
-  newdta=as.data.table(read.table('MINprutoky/chmu_stat2.dat', header=TRUE))
-  newdta[,K99:=X99/X50]
-  newdta[, MZPleto := round(calc_mzp(X330, KAT, "leto", input$expo, input$expo2), 3)]
-  newdta[, MZPzima := round(calc_mzp(X330, KAT, "zima", input$expo, input$expo2), 3)]
-  newdta[,pomer:=(MZPleto/X50)*100]
-  newdta[,pomer_zima:=(MZPzima/X50)*100]
-
-  newdta[, MZPold := calc_old_mzp(X330, X355, X364)]
-
-  newdta[, MZPleto1 := round(calc_mzp(X330, KAT, "leto", 0.85, 1.09), 3)]
-  newdta[, MZPzima1 := round(calc_mzp(X330, KAT, "zima", 0.85, 1.09), 3)]
-  newdta[,pomer1:=(MZPleto1/X50)*100]
-
-  plot_map(newdta, "pomer_zima", "Poměr")
+    plot_map(plot_data(), "pomer_zima", "Poměr")
 })
 
 output$plot6 <- renderPlot({
-  newdta=as.data.table(read.table('MINprutoky/chmu_stat2.dat', header=TRUE))
-  newdta[,K99:=X99/X50]
-  newdta[, MZPleto := round(calc_mzp(X330, KAT, "leto", input$expo, input$expo2), 3)]
-  newdta[, MZPzima := round(calc_mzp(X330, KAT, "zima", input$expo, input$expo2), 3)]
-  newdta[,pomer:=(MZPleto/X50)*100]
-  newdta[,pomer_zima:=(MZPzima/X50)*100]
-
-  newdta[, MZPold := calc_old_mzp(X330, X355, X364)]
-
-  newdta[,rozdil_hlavni:=MZPleto-MZPold]
-  newdta[,rozdil_jaro:=MZPzima-MZPold]
-  newdta[,rozdil_proc_hlav:=(rozdil_hlavni/MZPold)*100]
-  newdta[,rozdil_proc_jaro:=(rozdil_jaro/MZPold)*100]
-
-  newdta[, MZPleto1 := round(calc_mzp(X330, KAT, "leto", 0.85, 1.09), 3)]
-  newdta[, MZPzima1 := round(calc_mzp(X330, KAT, "zima", 0.85, 1.09), 3)]
-  newdta[,pomer1:=(MZPleto1/X50)*100]
-
-  plot_map(newdta, "rozdil_proc_hlav", "Změna")
+    plot_map(plot_data(), "rozdil_proc_hlav", "Změna")
 })
 
 output$plot7 <- renderPlot({
-  newdta=as.data.table(read.table('MINprutoky/chmu_stat2.dat', header=TRUE))
-  newdta[,K99:=X99/X50]
-  newdta[, MZPleto := round(calc_mzp(X330, KAT, "leto", input$expo, input$expo2), 3)]
-  newdta[, MZPzima := round(calc_mzp(X330, KAT, "zima", input$expo, input$expo2), 3)]
-  newdta[,pomer:=(MZPleto/X50)*100]
-  newdta[,pomer_zima:=(MZPzima/X50)*100]
-
-  newdta[, MZPold := calc_old_mzp(X330, X355, X364)]
-
-  newdta[,rozdil_hlavni:=MZPleto-MZPold]
-  newdta[,rozdil_jaro:=MZPzima-MZPold]
-  newdta[,rozdil_proc_hlav:=(rozdil_hlavni/MZPold)*100]
-  newdta[,rozdil_proc_jaro:=(rozdil_jaro/MZPold)*100]
-
-  newdta[, MZPleto1 := round(calc_mzp(X330, KAT, "leto", 0.85, 1.09), 3)]
-  newdta[, MZPzima1 := round(calc_mzp(X330, KAT, "zima", 0.85, 1.09), 3)]
-  newdta[,pomer1:=(MZPleto1/X50)*100]
-
-  plot_map(newdta, "rozdil_proc_jaro", "Změna")
+    plot_map(plot_data(), "rozdil_proc_jaro", "Změna")
 })
 
 output$summary <- renderPrint({
