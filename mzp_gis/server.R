@@ -6,23 +6,18 @@ library(rgdal)
 calc_mzp <- function(q330, kat, obd, exponent, exponent2) {
     coeffs = list(leto = c(0.65, 0.8, 0.85, 0.9), zima = c(0.85, 1, 1, 1))
     season = "leto"
-    if (obd == 22)
+    if (obd == 22 || obd == "zima")
         season = "zima"
     return(((q330^exponent)^exponent2)*coeffs[[season]][as.numeric(kat)])
 }
 
+calc_old_mzp <- function(X330, X355, X364) {
+    ifelse(X355 < 0.05, X330, ifelse(X355 < 0.5, (X330 + X355) * 0.5, ifelse(X355 < 5, X355, (X355 + X364) * 0.5)))
+}
+
 shinyServer(function(input, output) {
 new_mzp <- reactive({ calc_mzp(input$n, input$kat, input$rok, input$expo, input$expo2) })
-old_mzp <- reactive({
-    X330 <- input$n
-    X355 <- input$nn
-    X364 <- input$nnn
-
-    if (X355 < 0.05) return(X330)
-    else if (X355 < 0.5) return((X330 + X355) * 0.5)
-    else if (X355 < 5) return(X355)
-    else return((X355 + X364) * 0.5)
-})
+old_mzp <- reactive({ calc_old_mzp(input$n, input$nn, input$nnn) })
 
 output$plot <- renderPlot({
     kat <- input$kat
@@ -64,35 +59,13 @@ output$plot <- renderPlot({
   })
   
 output$plot2 <- renderPlot({
-  q330 <- input$n
-  obd = input$rok
-  kor1= input$expo
-  kor= input$expo2
-  
   newdta=as.data.table(read.table('MINprutoky/chmu_stat2.dat', header=TRUE))
   newdta[,K99:=X99/X50]
-#   newdta[K99>0.15, KAT:=2]
-#   newdta[K99>0.18, KAT:=1]
-#   newdta[K99>0.1 & K99<0.15, KAT:=3]
-#   newdta[K99<0.1, KAT:=4]
-  
-  newdta[KAT==1, MZPleto:=round(0.65*(X330^kor1)^kor,3)]
-  newdta[KAT==1, MZPzima:=round(0.85*(X330^kor1)^kor,3)]
-  
-  newdta[KAT==2, MZPleto:=round(0.8*(X330^kor1)^kor,3)]
-  newdta[KAT==2, MZPzima:=round(1*(X330^kor1)^kor,3)]
-  
-  newdta[KAT==3, MZPleto:=round(0.85*(X330^kor1)^kor,3)]
-  newdta[KAT==3, MZPzima:=round(1*(X330^kor1)^kor,3)]
-  
-  newdta[KAT==4, MZPleto:=round(0.9*(X330^kor1)^kor,3)]
-  newdta[KAT==4, MZPzima:=round(1*(X330^kor1)^kor,3)]
+  newdta[, MZPleto := round(calc_mzp(X330, KAT, "leto", input$expo, input$expo2), 3)]
+  newdta[, MZPzima := round(calc_mzp(X330, KAT, "zima", input$expo, input$expo2), 3)]
   newdta[,pomer:=(MZPleto/X50)*100]
   
-  newdta[X355<0.05, MZPold:=X330]
-  newdta[X355>0.05 & X355<0.5, MZPold:=(X330+X355)*0.5]
-  newdta[X355>0.5 & X355<5, MZPold:=X355]
-  newdta[X355>5, MZPold:=(X355+X364)*0.5]
+  newdta[, MZPold := calc_old_mzp(X330, X355, X364)]
   
   newdta[,rozdil_hlavni:=MZPleto-MZPold]
   newdta[,rozdil_jaro:=MZPzima-MZPold]
@@ -104,148 +77,46 @@ output$plot2 <- renderPlot({
     xlab('Kategorie')+
     ylab('Změna [%]')+
     theme(legend.position="none")
-  
-  
-  
-  #plot(newdta$X330,  type='l', lty=2, lwd=2, xlab='Q330', ylab='MZP')
-  #abline(coef=c(mzp3,0), col='red',lwd=0.7, lty=3)
-  #points(q330,mzp3, col='red',lwd=2)
-  #lines(rada, mzp2, type='l', lty=3, lwd=1)
-  
-  #grid()
-  #hist(data(), 
-  #   main=paste('r', dist, '(', n, ')', sep=''))
 })
 
 output$plot3 <- renderPlot({
-  #kat <- input$kat
-  q330 <- input$n
-  obd = input$rok
-  kor1= input$expo
-  kor= input$expo2
-  
   newdta=as.data.table(read.table('MINprutoky/chmu_stat2.dat', header=TRUE))
   newdta[,K99:=X99/X50]
-#   newdta[K99>0.15, KAT:=2]
-#   newdta[K99>0.18, KAT:=1]
-#   newdta[K99>0.1 & K99<0.15, KAT:=3]
-#   newdta[K99<0.1, KAT:=4]
-  
-  newdta[KAT==1, MZPleto:=round(0.65*(X330^kor1)^kor,3)]
-  newdta[KAT==1, MZPzima:=round(0.85*(X330^kor1)^kor,3)]
-  
-  newdta[KAT==2, MZPleto:=round(0.8*(X330^kor1)^kor,3)]
-  newdta[KAT==2, MZPzima:=round(1*(X330^kor1)^kor,3)]
-  
-  newdta[KAT==3, MZPleto:=round(0.85*(X330^kor1)^kor,3)]
-  newdta[KAT==3, MZPzima:=round(1*(X330^kor1)^kor,3)]
-  
-  newdta[KAT==4, MZPleto:=round(0.9*(X330^kor1)^kor,3)]
-  newdta[KAT==4, MZPzima:=round(1*(X330^kor1)^kor,3)]
+  newdta[, MZPleto := round(calc_mzp(X330, KAT, "leto", input$expo, input$expo2), 3)]
+  newdta[, MZPzima := round(calc_mzp(X330, KAT, "zima", input$expo, input$expo2), 3)]
   newdta[,pomer:=(MZPleto/X50)*100]
+
+  newdta[, MZPold := calc_old_mzp(X330, X355, X364)]
   
-  newdta[X355<0.05, MZPold:=X330]
-  newdta[X355>0.05 & X355<0.5, MZPold:=(X330+X355)*0.5]
-  newdta[X355>0.5 & X355<5, MZPold:=X355]
-  newdta[X355>5, MZPold:=(X355+X364)*0.5]
-  
-  newdta[,rozdil_hlavni:=MZPleto-MZPold]
-  newdta[,rozdil_jaro:=MZPzima-MZPold]
-  newdta[,rozdil_proc_hlav:=(rozdil_hlavni/MZPold)*100]
-  newdta[,rozdil_proc_jaro:=(rozdil_jaro/MZPold)*100]
-  
-  kor1=0.85
-  kor=1.09
-  
-  newdta[KAT==1, MZPleto1:=round(0.65*(X330^kor1)^kor,3)]
-  newdta[KAT==1, MZPzima1:=round(0.85*(X330^kor1)^kor,3)]
-  
-  newdta[KAT==2, MZPleto1:=round(0.8*(X330^kor1)^kor,3)]
-  newdta[KAT==2, MZPzima1:=round(1*(X330^kor1)^kor,3)]
-  
-  newdta[KAT==3, MZPleto1:=round(0.85*(X330^kor1)^kor,3)]
-  newdta[KAT==3, MZPzima1:=round(1*(X330^kor1)^kor,3)]
-  
-  newdta[KAT==4, MZPleto1:=round(0.9*(X330^kor1)^kor,3)]
-  newdta[KAT==4, MZPzima1:=round(1*(X330^kor1)^kor,3)]
+  newdta[, MZPleto1 := round(calc_mzp(X330, KAT, "leto", 0.85, 1.09), 3)]
+  newdta[, MZPzima1 := round(calc_mzp(X330, KAT, "zima", 0.85, 1.09), 3)]
   newdta[,pomer1:=(MZPleto1/X50)*100]
-  
-  
-  
+
   ggplot(newdta,aes(factor=KAT))+
-    #  geom_boxplot(aes(x=KAT,y=X330, group=KAT))
     geom_point(aes(x=X330,y=pomer1, group=KAT,alpha=0.5), colour='dark blue')+
     geom_point(aes(x=X330,y=pomer, group=KAT), colour = 'red' ,alpha=0.5)+
-    #geom_abline(1)+
     ylim(0,100)+
     facet_grid(.~KAT, scales='free_x')+
     xlab('Qa')+
     ylab('Poměr [%]')+
     theme(legend.position="none")
-    
 })
 
 output$plot4 <- renderPlot({
-  #kat <- input$kat
-  q330 <- input$n
-  obd = input$rok
-  kor1= input$expo
-  kor= input$expo2
-  
- # kor1=0.85
-#  kor=1.09
-  
-  #newdta=as.data.table(read.table('/media//Windows7_OS_/vizina/MINprutoky/chmu_stat2.dat', header=TRUE))
   newdta=as.data.table(read.table('MINprutoky/chmu_stat2.dat', header=TRUE))
   newdta[,K99:=X99/X50]
-#   newdta[K99>0.15, KAT:=2]
-#   newdta[K99>0.18, KAT:=1]
-#   newdta[K99>0.1 & K99<0.15, KAT:=3]
-#   newdta[K99<0.1, KAT:=4]
-  
-  newdta[KAT==1, MZPleto:=round(0.65*(X330^kor1)^kor,3)]
-  newdta[KAT==1, MZPzima:=round(0.85*(X330^kor1)^kor,3)]
-  
-  newdta[KAT==2, MZPleto:=round(0.8*(X330^kor1)^kor,3)]
-  newdta[KAT==2, MZPzima:=round(1*(X330^kor1)^kor,3)]
-  
-  newdta[KAT==3, MZPleto:=round(0.85*(X330^kor1)^kor,3)]
-  newdta[KAT==3, MZPzima:=round(1*(X330^kor1)^kor,3)]
-  
-  newdta[KAT==4, MZPleto:=round(0.9*(X330^kor1)^kor,3)]
-  newdta[KAT==4, MZPzima:=round(1*(X330^kor1)^kor,3)]
+  newdta[, MZPleto := round(calc_mzp(X330, KAT, "leto", input$expo, input$expo2), 3)]
+  newdta[, MZPzima := round(calc_mzp(X330, KAT, "zima", input$expo, input$expo2), 3)]
   newdta[,pomer:=(MZPleto/X50)*100]
+
+  newdta[, MZPold := calc_old_mzp(X330, X355, X364)]
   
-  newdta[X355<0.05, MZPold:=X330]
-  newdta[X355>0.05 & X355<0.5, MZPold:=(X330+X355)*0.5]
-  newdta[X355>0.5 & X355<5, MZPold:=X355]
-  newdta[X355>5, MZPold:=(X355+X364)*0.5]
-  
-  newdta[,rozdil_hlavni:=MZPleto-MZPold]
-  newdta[,rozdil_jaro:=MZPzima-MZPold]
-  newdta[,rozdil_proc_hlav:=(rozdil_hlavni/MZPold)*100]
-  newdta[,rozdil_proc_jaro:=(rozdil_jaro/MZPold)*100]
-  
-  kor1=0.85
-  kor=1.09
-  
-  newdta[KAT==1, MZPleto1:=round(0.65*(X330^kor1)^kor,3)]
-  newdta[KAT==1, MZPzima1:=round(0.85*(X330^kor1)^kor,3)]
-  
-  newdta[KAT==2, MZPleto1:=round(0.8*(X330^kor1)^kor,3)]
-  newdta[KAT==2, MZPzima1:=round(1*(X330^kor1)^kor,3)]
-  
-  newdta[KAT==3, MZPleto1:=round(0.85*(X330^kor1)^kor,3)]
-  newdta[KAT==3, MZPzima1:=round(1*(X330^kor1)^kor,3)]
-  
-  newdta[KAT==4, MZPleto1:=round(0.9*(X330^kor1)^kor,3)]
-  newdta[KAT==4, MZPzima1:=round(1*(X330^kor1)^kor,3)]
+  newdta[, MZPleto1 := round(calc_mzp(X330, KAT, "leto", 0.85, 1.09), 3)]
+  newdta[, MZPzima1 := round(calc_mzp(X330, KAT, "zima", 0.85, 1.09), 3)]
   newdta[,pomer1:=(MZPleto1/X50)*100]
   
   library('rgdal')
   library('maptools')
-  
-  #povo_bod = readOGR('/media//Windows7_OS_/vizina/gis/hydro data/dib_E04_Vodomerne_stanice/','E04_Vodomerne_stanice')
   povo_bod = readOGR('gis/','E04_Vodomerne_stanice')
   
   p=data.table(povo_bod@data)
@@ -295,54 +166,19 @@ povo_kat=fortify(povo_kat)
 })
 
 output$plot5 <- renderPlot({
-  q330 <- input$n
-  obd = input$rok
-  kor1= input$expo
-  kor= input$expo2
-  
   newdta=as.data.table(read.table('MINprutoky/chmu_stat2.dat', header=TRUE))
   newdta[,K99:=X99/X50]
-  
-  newdta[KAT==1, MZPleto:=round(0.65*(X330^kor1)^kor,3)]
-  newdta[KAT==1, MZPzima:=round(0.85*(X330^kor1)^kor,3)]
-  
-  newdta[KAT==2, MZPleto:=round(0.8*(X330^kor1)^kor,3)]
-  newdta[KAT==2, MZPzima:=round(1*(X330^kor1)^kor,3)]
-  
-  newdta[KAT==3, MZPleto:=round(0.85*(X330^kor1)^kor,3)]
-  newdta[KAT==3, MZPzima:=round(1*(X330^kor1)^kor,3)]
-  
-  newdta[KAT==4, MZPleto:=round(0.9*(X330^kor1)^kor,3)]
-  newdta[KAT==4, MZPzima:=round(1*(X330^kor1)^kor,3)]
+  newdta[, MZPleto := round(calc_mzp(X330, KAT, "leto", input$expo, input$expo2), 3)]
+  newdta[, MZPzima := round(calc_mzp(X330, KAT, "zima", input$expo, input$expo2), 3)]
   newdta[,pomer:=(MZPleto/X50)*100]
   newdta[,pomer_zima:=(MZPzima/X50)*100]
-  
-  newdta[X355<0.05, MZPold:=X330]
-  newdta[X355>0.05 & X355<0.5, MZPold:=(X330+X355)*0.5]
-  newdta[X355>0.5 & X355<5, MZPold:=X355]
-  newdta[X355>5, MZPold:=(X355+X364)*0.5]
-  
-  newdta[,rozdil_hlavni:=MZPleto-MZPold]
-  newdta[,rozdil_jaro:=MZPzima-MZPold]
-  newdta[,rozdil_proc_hlav:=(rozdil_hlavni/MZPold)*100]
-  newdta[,rozdil_proc_jaro:=(rozdil_jaro/MZPold)*100]
-  
-  kor1=0.85
-  kor=1.09
-  
-  newdta[KAT==1, MZPleto1:=round(0.65*(X330^kor1)^kor,3)]
-  newdta[KAT==1, MZPzima1:=round(0.85*(X330^kor1)^kor,3)]
-  
-  newdta[KAT==2, MZPleto1:=round(0.8*(X330^kor1)^kor,3)]
-  newdta[KAT==2, MZPzima1:=round(1*(X330^kor1)^kor,3)]
-  
-  newdta[KAT==3, MZPleto1:=round(0.85*(X330^kor1)^kor,3)]
-  newdta[KAT==3, MZPzima1:=round(1*(X330^kor1)^kor,3)]
-  
-  newdta[KAT==4, MZPleto1:=round(0.9*(X330^kor1)^kor,3)]
-  newdta[KAT==4, MZPzima1:=round(1*(X330^kor1)^kor,3)]
+
+  newdta[, MZPold := calc_old_mzp(X330, X355, X364)]
+
+  newdta[, MZPleto1 := round(calc_mzp(X330, KAT, "leto", 0.85, 1.09), 3)]
+  newdta[, MZPzima1 := round(calc_mzp(X330, KAT, "zima", 0.85, 1.09), 3)]
   newdta[,pomer1:=(MZPleto1/X50)*100]
-  
+
   library('rgdal')
   library('maptools')
   
@@ -396,60 +232,27 @@ output$plot5 <- renderPlot({
   
 })
 
-
 output$plot6 <- renderPlot({
-  q330 <- input$n
-  obd = input$rok
-  kor1= input$expo
-  kor= input$expo2
-  
   newdta=as.data.table(read.table('MINprutoky/chmu_stat2.dat', header=TRUE))
   newdta[,K99:=X99/X50]
-  
-  newdta[KAT==1, MZPleto:=round(0.65*(X330^kor1)^kor,3)]
-  newdta[KAT==1, MZPzima:=round(0.85*(X330^kor1)^kor,3)]
-  
-  newdta[KAT==2, MZPleto:=round(0.8*(X330^kor1)^kor,3)]
-  newdta[KAT==2, MZPzima:=round(1*(X330^kor1)^kor,3)]
-  
-  newdta[KAT==3, MZPleto:=round(0.85*(X330^kor1)^kor,3)]
-  newdta[KAT==3, MZPzima:=round(1*(X330^kor1)^kor,3)]
-  
-  newdta[KAT==4, MZPleto:=round(0.9*(X330^kor1)^kor,3)]
-  newdta[KAT==4, MZPzima:=round(1*(X330^kor1)^kor,3)]
+  newdta[, MZPleto := round(calc_mzp(X330, KAT, "leto", input$expo, input$expo2), 3)]
+  newdta[, MZPzima := round(calc_mzp(X330, KAT, "zima", input$expo, input$expo2), 3)]
   newdta[,pomer:=(MZPleto/X50)*100]
   newdta[,pomer_zima:=(MZPzima/X50)*100]
-  
-  newdta[X355<0.05, MZPold:=X330]
-  newdta[X355>0.05 & X355<0.5, MZPold:=(X330+X355)*0.5]
-  newdta[X355>0.5 & X355<5, MZPold:=X355]
-  newdta[X355>5, MZPold:=(X355+X364)*0.5]
-  
+
+  newdta[, MZPold := calc_old_mzp(X330, X355, X364)]
+
   newdta[,rozdil_hlavni:=MZPleto-MZPold]
   newdta[,rozdil_jaro:=MZPzima-MZPold]
   newdta[,rozdil_proc_hlav:=(rozdil_hlavni/MZPold)*100]
   newdta[,rozdil_proc_jaro:=(rozdil_jaro/MZPold)*100]
-  
-  kor1=0.85
-  kor=1.09
-  
-  newdta[KAT==1, MZPleto1:=round(0.65*(X330^kor1)^kor,3)]
-  newdta[KAT==1, MZPzima1:=round(0.85*(X330^kor1)^kor,3)]
-  
-  newdta[KAT==2, MZPleto1:=round(0.8*(X330^kor1)^kor,3)]
-  newdta[KAT==2, MZPzima1:=round(1*(X330^kor1)^kor,3)]
-  
-  newdta[KAT==3, MZPleto1:=round(0.85*(X330^kor1)^kor,3)]
-  newdta[KAT==3, MZPzima1:=round(1*(X330^kor1)^kor,3)]
-  
-  newdta[KAT==4, MZPleto1:=round(0.9*(X330^kor1)^kor,3)]
-  newdta[KAT==4, MZPzima1:=round(1*(X330^kor1)^kor,3)]
+
+  newdta[, MZPleto1 := round(calc_mzp(X330, KAT, "leto", 0.85, 1.09), 3)]
+  newdta[, MZPzima1 := round(calc_mzp(X330, KAT, "zima", 0.85, 1.09), 3)]
   newdta[,pomer1:=(MZPleto1/X50)*100]
-  
+
   library('rgdal')
   library('maptools')
-  
-  #povo_bod = readOGR('/media//Windows7_OS_/vizina/gis/hydro data/dib_E04_Vodomerne_stanice/','E04_Vodomerne_stanice')
   povo_bod = readOGR('gis/','E04_Vodomerne_stanice')
   povo_kat = readOGR('gis/','reg_adam2')
   povo_kat=fortify(povo_kat)
@@ -501,56 +304,22 @@ output$plot6 <- renderPlot({
 })
 
 output$plot7 <- renderPlot({
-  q330 <- input$n
-  obd = input$rok
-  kor1= input$expo
-  kor= input$expo2
-  
-#  kor1=0.85
-#  kor=1.09
-  
-  #newdta=as.data.table(read.table('/media//Windows7_OS_/vizina/MINprutoky/chmu_stat2.dat', header=TRUE))
   newdta=as.data.table(read.table('MINprutoky/chmu_stat2.dat', header=TRUE))
   newdta[,K99:=X99/X50]
-  
-  newdta[KAT==1, MZPleto:=round(0.65*(X330^kor1)^kor,3)]
-  newdta[KAT==1, MZPzima:=round(0.85*(X330^kor1)^kor,3)]
-  
-  newdta[KAT==2, MZPleto:=round(0.8*(X330^kor1)^kor,3)]
-  newdta[KAT==2, MZPzima:=round(1*(X330^kor1)^kor,3)]
-  
-  newdta[KAT==3, MZPleto:=round(0.85*(X330^kor1)^kor,3)]
-  newdta[KAT==3, MZPzima:=round(1*(X330^kor1)^kor,3)]
-  
-  newdta[KAT==4, MZPleto:=round(0.9*(X330^kor1)^kor,3)]
-  newdta[KAT==4, MZPzima:=round(1*(X330^kor1)^kor,3)]
+  newdta[, MZPleto := round(calc_mzp(X330, KAT, "leto", input$expo, input$expo2), 3)]
+  newdta[, MZPzima := round(calc_mzp(X330, KAT, "zima", input$expo, input$expo2), 3)]
   newdta[,pomer:=(MZPleto/X50)*100]
   newdta[,pomer_zima:=(MZPzima/X50)*100]
-  
-  newdta[X355<0.05, MZPold:=X330]
-  newdta[X355>0.05 & X355<0.5, MZPold:=(X330+X355)*0.5]
-  newdta[X355>0.5 & X355<5, MZPold:=X355]
-  newdta[X355>5, MZPold:=(X355+X364)*0.5]
-  
+
+  newdta[, MZPold := calc_old_mzp(X330, X355, X364)]
+
   newdta[,rozdil_hlavni:=MZPleto-MZPold]
   newdta[,rozdil_jaro:=MZPzima-MZPold]
   newdta[,rozdil_proc_hlav:=(rozdil_hlavni/MZPold)*100]
   newdta[,rozdil_proc_jaro:=(rozdil_jaro/MZPold)*100]
-  
-  kor1=0.85
-  kor=1.09
-  
-  newdta[KAT==1, MZPleto1:=round(0.65*(X330^kor1)^kor,3)]
-  newdta[KAT==1, MZPzima1:=round(0.85*(X330^kor1)^kor,3)]
-  
-  newdta[KAT==2, MZPleto1:=round(0.8*(X330^kor1)^kor,3)]
-  newdta[KAT==2, MZPzima1:=round(1*(X330^kor1)^kor,3)]
-  
-  newdta[KAT==3, MZPleto1:=round(0.85*(X330^kor1)^kor,3)]
-  newdta[KAT==3, MZPzima1:=round(1*(X330^kor1)^kor,3)]
-  
-  newdta[KAT==4, MZPleto1:=round(0.9*(X330^kor1)^kor,3)]
-  newdta[KAT==4, MZPzima1:=round(1*(X330^kor1)^kor,3)]
+
+  newdta[, MZPleto1 := round(calc_mzp(X330, KAT, "leto", 0.85, 1.09), 3)]
+  newdta[, MZPzima1 := round(calc_mzp(X330, KAT, "zima", 0.85, 1.09), 3)]
   newdta[,pomer1:=(MZPleto1/X50)*100]
   
   library('rgdal')
