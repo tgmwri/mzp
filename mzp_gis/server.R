@@ -15,6 +15,54 @@ calc_old_mzp <- function(X330, X355, X364) {
     ifelse(X355 < 0.05, X330, ifelse(X355 < 0.5, (X330 + X355) * 0.5, ifelse(X355 < 5, X355, (X355 + X364) * 0.5)))
 }
 
+plot_map <- function(dta, var_name, color_title) {
+  library('rgdal')
+  library('maptools')
+  povo_bod = readOGR('gis/','E04_Vodomerne_stanice')
+  povo_kat = readOGR('gis/','reg_adam2')
+  povo_kat=fortify(povo_kat)
+
+  p=data.table(povo_bod@data)
+  pokus=povo_bod@coords
+  p$X_COORD=pokus[,1]
+  p$Y_COORD=pokus[,2]
+
+  p = data.table(fortify(p,region='DBCN'))
+  p$DBCN=as.character(p$DBCN)
+
+  dta$DBCN=dta$DBC
+
+  for (k in 1:length(dta$DBC))
+  {
+    if (nchar(dta$DBC[k])==4) dta$DBCN[k]=paste0('00',dta$DBC[k])
+    if (nchar(dta$DBC[k])==5) dta$DBCN[k]=paste0('0',dta$DBC[k])
+  }
+
+  setkey(p, DBCN)
+  setkey(dta, DBCN)
+
+  B = dta[p, allow.cartesian=TRUE]
+  B=na.omit(B)
+  B[, MP:=1]
+
+  hranice = readOGR('gis/','cr_sjtsk')
+
+  mp = B[, MP[1]]
+  d = B
+
+  ggplot(d) +
+    geom_point(aes(x=X_COORD, y=Y_COORD,shape = factor(KAT)), colour='black', size=5.5,alpha=0.21)+
+    geom_point(aes_string(x = "X_COORD", y = "Y_COORD", shape = "factor(KAT)", colour = var_name), size=4,alpha=0.6)+
+    scale_colour_gradient2(low = ("red"), mid = 'green', high=('blue'), name = color_title) +
+    scale_shape_discrete(name='Kat')+
+    xlab('long') +
+    ylab('lat') +
+    theme_minimal() +
+    coord_fixed()+
+    geom_polygon(aes(x=long, y = lat), data = hranice, fill = NA, col='grey',lwd=0.3)+
+    geom_polygon(aes(x=long, y = lat, group=group), fill=povo_kat$group, data = povo_kat, col='red',lwd=0.3,alpha=0.1)
+}
+
 shinyServer(function(input, output) {
 new_mzp <- reactive({ calc_mzp(input$n, input$kat, input$rok, input$expo, input$expo2) })
 old_mzp <- reactive({ calc_old_mzp(input$n, input$nn, input$nnn) })
@@ -115,54 +163,7 @@ output$plot4 <- renderPlot({
   newdta[, MZPzima1 := round(calc_mzp(X330, KAT, "zima", 0.85, 1.09), 3)]
   newdta[,pomer1:=(MZPleto1/X50)*100]
   
-  library('rgdal')
-  library('maptools')
-  povo_bod = readOGR('gis/','E04_Vodomerne_stanice')
-  
-  p=data.table(povo_bod@data)
-  pokus=povo_bod@coords
-  p$X_COORD=pokus[,1]
-  p$Y_COORD=pokus[,2]
-  
-  p = data.table(fortify(p,region='DBCN'))
-  p$DBCN=as.character(p$DBCN)
-  
-  dta = newdta
-  dta$DBCN=dta$DBC
-  
-  for (k in 1:length(dta$DBC))
-  {
-  if (nchar(dta$DBC[k])==4) dta$DBCN[k]=paste0('00',dta$DBC[k]) 
-  if (nchar(dta$DBC[k])==5) dta$DBCN[k]=paste0('0',dta$DBC[k]) 
-  }
-  
-  setkey(p, DBCN)
-  setkey(dta, DBCN)
-  
-  B = dta[p, allow.cartesian=TRUE]
-  B=na.omit(B)
-  B[, MP:=1]
-  
-  hranice = readOGR('gis/','cr_sjtsk')
-  povo_kat = readOGR('gis/','reg_adam2')
-povo_kat=fortify(povo_kat)
-
-  mp = B[, MP[1]]  
-  d = B
-
-  ggplot(d) + 
-    geom_point(aes(x=X_COORD, y=Y_COORD,shape = factor(KAT)), colour='black', size=5.5,alpha=0.21)+
-    geom_point(aes(x=X_COORD, y=Y_COORD,shape = factor(KAT), colour=(pomer)), size=4,alpha=0.6)+
-    
-    scale_colour_gradient2(low = ("red"), mid = 'green', high=('blue'), name='Poměr')+
-    scale_shape_discrete(name='Kat')+
-    xlab('long') +
-    ylab('lat') + 
-    theme_minimal() +
-    coord_fixed()+
-    geom_polygon(aes(x=long, y = lat), data = hranice, fill = NA, col='grey',lwd=0.3)+
-    geom_polygon(aes(x=long, y = lat, group=group), fill=povo_kat$group, data = povo_kat, col='red',lwd=0.3,alpha=0.1)
-  
+  plot_map(newdta, "pomer", "Poměr")
 })
 
 output$plot5 <- renderPlot({
@@ -179,57 +180,7 @@ output$plot5 <- renderPlot({
   newdta[, MZPzima1 := round(calc_mzp(X330, KAT, "zima", 0.85, 1.09), 3)]
   newdta[,pomer1:=(MZPleto1/X50)*100]
 
-  library('rgdal')
-  library('maptools')
-  
-  povo_bod = readOGR('gis/','E04_Vodomerne_stanice')
-  povo_kat = readOGR('gis/','reg_adam2')
-  povo_kat=fortify(povo_kat)
-  
-  p=data.table(povo_bod@data)
-  pokus=povo_bod@coords
-  p$X_COORD=pokus[,1]
-  p$Y_COORD=pokus[,2]
-  
-  p = data.table(fortify(p,region='DBCN'))
-  p$DBCN=as.character(p$DBCN)
-  
-  dta = newdta
-  dta$DBCN=dta$DBC
-  
-  for (k in 1:length(dta$DBC))
-  {
-    if (nchar(dta$DBC[k])==4) dta$DBCN[k]=paste0('00',dta$DBC[k]) 
-    if (nchar(dta$DBC[k])==5) dta$DBCN[k]=paste0('0',dta$DBC[k]) 
-  }
-  
-  setkey(p, DBCN)
-  setkey(dta, DBCN)
-  
-  B = dta[p, allow.cartesian=TRUE]
-  B=na.omit(B)
-  B[, MP:=1]
-  
-  hranice = readOGR('gis/','cr_sjtsk')
-  
-  mp = B[, MP[1]]  
-  d = B
-
-  ggplot(d) + 
-    geom_point(aes(x=X_COORD, y=Y_COORD,shape = factor(KAT)), colour='black', size=5.5,alpha=0.21)+
-    geom_point(aes(x=X_COORD, y=Y_COORD,shape = factor(KAT), colour=(pomer_zima)), size=4,alpha=0.6)+
-    
-    scale_colour_gradient2(low = ("red"), mid = 'green', high=('blue'), name='Poměr')+
-    scale_shape_discrete(name='Kat')+
-    xlab('long') +
-    ylab('lat') + 
-    theme_minimal() +
-    coord_fixed()+
-    #theme(legend.position="none")+
-    geom_polygon(aes(x=long, y = lat), data = hranice, fill = NA, col='grey',lwd=0.3)+
-    geom_polygon(aes(x=long, y = lat, group=group), fill=povo_kat$group, data = povo_kat, col='red',lwd=0.3,alpha=0.1)
-  #geom_polygon(aes(x=long, y = lat), data = povo_kat1, fill = 'green',col='red',lwd=0.3,alpha=0.1)
-  
+  plot_map(newdta, "pomer_zima", "Poměr")
 })
 
 output$plot6 <- renderPlot({
@@ -251,56 +202,7 @@ output$plot6 <- renderPlot({
   newdta[, MZPzima1 := round(calc_mzp(X330, KAT, "zima", 0.85, 1.09), 3)]
   newdta[,pomer1:=(MZPleto1/X50)*100]
 
-  library('rgdal')
-  library('maptools')
-  povo_bod = readOGR('gis/','E04_Vodomerne_stanice')
-  povo_kat = readOGR('gis/','reg_adam2')
-  povo_kat=fortify(povo_kat)
-  
-  p=data.table(povo_bod@data)
-  pokus=povo_bod@coords
-  p$X_COORD=pokus[,1]
-  p$Y_COORD=pokus[,2]
-  
-  p = data.table(fortify(p,region='DBCN'))
-  p$DBCN=as.character(p$DBCN)
-  
-  dta = newdta
-  dta$DBCN=dta$DBC
-  
-  for (k in 1:length(dta$DBC))
-  {
-    if (nchar(dta$DBC[k])==4) dta$DBCN[k]=paste0('00',dta$DBC[k]) 
-    if (nchar(dta$DBC[k])==5) dta$DBCN[k]=paste0('0',dta$DBC[k]) 
-  }
-  
-  setkey(p, DBCN)
-  setkey(dta, DBCN)
-  
-  B = dta[p, allow.cartesian=TRUE]
-  B=na.omit(B)
-  B[, MP:=1]
-  
-  hranice = readOGR('gis/','cr_sjtsk')
-  
-  mp = B[, MP[1]]  
-  d = B
-  
-  ggplot(d) + 
-    geom_point(aes(x=X_COORD, y=Y_COORD,shape = factor(KAT)), colour='black', size=5.5,alpha=0.21)+
-    geom_point(aes(x=X_COORD, y=Y_COORD,shape = factor(KAT), colour=(rozdil_proc_hlav)), size=4,alpha=0.6)+
-    
-    scale_colour_gradient2(low = ("red"), mid = 'green', high=('blue'), name='Změna')+
-    scale_shape_discrete(name='Kat')+
-    xlab('long') +
-    ylab('lat') + 
-    theme_minimal() +
-    coord_fixed()+
-    #theme(legend.position="none")+
-    geom_polygon(aes(x=long, y = lat), data = hranice, fill = NA, col='grey',lwd=0.3)+
-    geom_polygon(aes(x=long, y = lat, group=group), fill=povo_kat$group, data = povo_kat, col='red',lwd=0.3,alpha=0.1)
-  #  scale_fill_manual(values)
-  #geom_polygon(aes(x=long, y = lat), data = povo_kat1, fill = 'green',col='red',lwd=0.3,alpha=0.1)
+  plot_map(newdta, "rozdil_proc_hlav", "Změna")
 })
 
 output$plot7 <- renderPlot({
@@ -321,59 +223,8 @@ output$plot7 <- renderPlot({
   newdta[, MZPleto1 := round(calc_mzp(X330, KAT, "leto", 0.85, 1.09), 3)]
   newdta[, MZPzima1 := round(calc_mzp(X330, KAT, "zima", 0.85, 1.09), 3)]
   newdta[,pomer1:=(MZPleto1/X50)*100]
-  
-  library('rgdal')
-  library('maptools')
-  
-  #povo_bod = readOGR('/media//Windows7_OS_/vizina/gis/hydro data/dib_E04_Vodomerne_stanice/','E04_Vodomerne_stanice')
-  povo_bod = readOGR('gis/','E04_Vodomerne_stanice')
-  povo_kat = readOGR('gis/','reg_adam2')
-  povo_kat=fortify(povo_kat)
-  
-  p=data.table(povo_bod@data)
-  pokus=povo_bod@coords
-  p$X_COORD=pokus[,1]
-  p$Y_COORD=pokus[,2]
-  
-  p = data.table(fortify(p,region='DBCN'))
-  p$DBCN=as.character(p$DBCN)
-  
-  dta = newdta
-  dta$DBCN=dta$DBC
-  
-  for (k in 1:length(dta$DBC))
-  {
-    if (nchar(dta$DBC[k])==4) dta$DBCN[k]=paste0('00',dta$DBC[k]) 
-    if (nchar(dta$DBC[k])==5) dta$DBCN[k]=paste0('0',dta$DBC[k]) 
-  }
-  
-  setkey(p, DBCN)
-  setkey(dta, DBCN)
-  
-  B = dta[p, allow.cartesian=TRUE]
-  B=na.omit(B)
-  B[, MP:=1]
-  
-  hranice = readOGR('gis/','cr_sjtsk')
-  
-  mp = B[, MP[1]]  
-  d = B
-  
-  ggplot(d) + 
-    geom_point(aes(x=X_COORD, y=Y_COORD,shape = factor(KAT)), colour='black', size=5.5,alpha=0.21)+
-    geom_point(aes(x=X_COORD, y=Y_COORD,shape = factor(KAT), colour=(rozdil_proc_jaro)), size=4,alpha=0.6)+
-    
-    scale_colour_gradient2(low = ("red"), mid = 'green', high=('blue'), name='Změna')+
-    scale_shape_discrete(name='Kat')+
-    xlab('long') +
-    ylab('lat') + 
-    theme_minimal() +
-    coord_fixed()+
-    #theme(legend.position="none")+
-    geom_polygon(aes(x=long, y = lat), data = hranice, fill = NA, col='grey',lwd=0.3)+
-    geom_polygon(aes(x=long, y = lat, group=group), fill=povo_kat$group, data = povo_kat, col='red',lwd=0.3,alpha=0.1)
-  #geom_polygon(aes(x=long, y = lat), data = povo_kat1, fill = 'green',col='red',lwd=0.3,alpha=0.1)
-  
+
+  plot_map(newdta, "rozdil_proc_jaro", "Změna")
 })
 
 output$summary <- renderPrint({
