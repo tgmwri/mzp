@@ -24,8 +24,10 @@ shinyUI(pageWithSidebar(
     
     
     numericInput('nnn', 'Hodnota Q364:', 0.5,
-                 min = 0, max = 1000)
+                 min = 0, max = 1000),
     
+    numericInput('nnnn', 'Hodnota Qa:', 3,
+                 min = 0, max = 1000)
 
   ),
   
