@@ -1,14 +1,12 @@
 library(shiny)
 library(data.table)
 
-calc_mzp <- function(q330, kat, obd) {
-    coeffs = list(leto = c(0.65, 0.8, 0.85, 0.9), zima = c(0.85, 1, 1, 1))
+calc_mzp <- function(q330, q355, Qa, kat, obd) {
+    coeffs = list(leto = c(1.1, 1.2, 1.05, 1.07), zima = c(1, 1, 1, 1))
     season = "leto"
     if (obd == 22)
         season = "zima"
-    exponent = 0.85
-    if (q330<1) exponent2=1.09 else exponent2=1
-    return(((q330^exponent)^exponent2)*coeffs[[season]][as.numeric(kat)])
+    return(((1-(Q355/Qa))*Q330*coeffs[[season]][as.numeric(kat)])
 }
 
 shinyServer(function(input, output) {
