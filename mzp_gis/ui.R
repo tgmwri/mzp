@@ -14,26 +14,8 @@ shinyUI(pageWithSidebar(
                    c("Léto" = 11,
                      "Zima" = 22)),
       
-    sliderInput("n", 
-                "Hodnota Q330:", 
-                 value = 1,
-                 min = 0, 
-                 max = 4,
-                 step = 0.001),
-   
-    sliderInput("expo", 
-                "Exponent1:", 
-                value = 0.85,
-                min = 0, 
-                max = 2,
-                step = 0.001),
-  
-    sliderInput("expo2", 
-                "Exponent2:", 
-                value = 1.09,
-                min = 0, 
-                max = 2,
-                step = 0.001),
+    numericInput('n', 'Hodnota Q330:', 1,
+                 min = 0, max = 1000),
     
     
     numericInput('nn', 'Hodnota Q355:', 0.7,
@@ -41,7 +23,11 @@ shinyUI(pageWithSidebar(
     
     
     numericInput('nnn', 'Hodnota Q364:', 0.5,
+                 min = 0, max = 1000),
+                 
+    numericInput('nnnn', 'Hodnota Qa:', 3,
                  min = 0, max = 1000)
+                 
     ),
   
   mainPanel(
