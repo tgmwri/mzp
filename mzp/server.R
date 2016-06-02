@@ -6,7 +6,7 @@ calc_mzp <- function(q330, q355, Qa, kat, obd) {
     season = "leto"
     if (obd == 22)
         season = "zima"
-    return(((1-(Q355/Qa))*Q330*coeffs[[season]][as.numeric(kat)])
+    return((1-(q355/Qa))*q330*coeffs[[season]][as.numeric(kat)])
 }
 
 shinyServer(function(input, output) {
@@ -28,7 +28,7 @@ old_mzp <- reactive({
     
     rada=seq((q330-0.9*q330),(q330+0.9*q330),by=q330/50)
     mzp1=rep(0,91)
-    mzp1 = sapply(rada, calc_mzp, input$kat, input$rok)
+    mzp1 = sapply(rada, calc_mzp, input$nn, input$nnnn, input$kat, input$rok)
     
     plot(rada, mzp1, type='l', lty=2, lwd=2, xlab='Q330', ylab='MZP')
     abline(coef=c(mzp,0), col='red',lwd=1, lty=3)

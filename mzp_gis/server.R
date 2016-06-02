@@ -8,7 +8,7 @@ calc_mzp <- function(q330, q355, Qa, kat, obd) {
     season = "leto"
     if (obd == 22)
         season = "zima"
-    return(((1-(Q355/Qa))*Q330*coeffs[[season]][as.numeric(kat)])
+    return((1-(q355/Qa))*q330*coeffs[[season]][as.numeric(kat)])
 }
 
 calc_old_mzp <- function(X330, X355, X364) {
@@ -64,7 +64,7 @@ plot_map <- function(dta, var_name, color_title) {
 }
 
 shinyServer(function(input, output) {
-new_mzp <- reactive({ calc_mzp(input$n, input$kat, input$rok, input$expo, input$expo2) })
+new_mzp <- reactive({ calc_mzp(input$n, input$nn, input$nnnn, input$kat, input$rok) })
 old_mzp <- reactive({ calc_old_mzp(input$n, input$nn, input$nnn) })
 
 output$plot <- renderPlot({
@@ -74,10 +74,10 @@ output$plot <- renderPlot({
     q355 <- input$nn
     qa  <- input$nnnn
 
-    mzp = calc_mzp(q330, kat, obd, q355, qa)
+    mzp = calc_mzp(q330, q355, qa, kat, obd)
     
     exponent=0.85
-    mzp3 = calc_mzp(q330, kat, obd, q355, qa)
+    mzp3 = calc_mzp(q330, q355, qa, kat, obd)
     
     rada=seq((q330-0.9*q330),(q330+0.9*q330),by=q330/50)
     
@@ -86,9 +86,9 @@ output$plot <- renderPlot({
     
     for (i in 1:91)
     {
-        mzp1[i] = calc_mzp(rada[i], kat, obd, q355, qa)
+        mzp1[i] = calc_mzp(rada[i], q355, qa, kat, obd)
 
-        mzp2[i] = calc_mzp(rada[i], kat, obd, q355, qa)
+        mzp2[i] = calc_mzp(rada[i], q355, qa, kat, obd)
     }
     
     bod = old_mzp()
@@ -106,8 +106,10 @@ output$plot <- renderPlot({
 plot_data <- reactive({
   newdta=as.data.table(read.table('MINprutoky/chmu_stat2.dat', header=TRUE))
   newdta[,K99:=X99/X50]
-  newdta[, MZPleto := round(calc_mzp(X330, KAT, "leto", q355, qa), 3)]
-  newdta[, MZPzima := round(calc_mzp(X330, KAT, "zima", q355, qa), 3)]
+  q355 = input$nn
+  qa = input$nnnn
+  newdta[, MZPleto := round(calc_mzp(X330, q355, qa, KAT, "leto"), 3)]
+  newdta[, MZPzima := round(calc_mzp(X330, q355, qa, KAT, "zima"), 3)]
   newdta[,pomer:=(MZPleto/X50)*100]
   newdta[,pomer_zima:=(MZPzima/X50)*100]
 
@@ -118,8 +120,8 @@ plot_data <- reactive({
   newdta[,rozdil_proc_hlav:=(rozdil_hlavni/MZPold)*100]
   newdta[,rozdil_proc_jaro:=(rozdil_jaro/MZPold)*100]
 
-  newdta[, MZPleto1 := round(calc_mzp(X330, KAT, "leto", q355, qa), 3)]
-  newdta[, MZPzima1 := round(calc_mzp(X330, KAT, "zima", q355, qa), 3)]
+  newdta[, MZPleto1 := round(calc_mzp(X330, q355, qa, KAT, "leto"), 3)]
+  newdta[, MZPzima1 := round(calc_mzp(X330, q355, qa, KAT, "zima"), 3)]
   newdta[,pomer1:=(MZPleto1/X50)*100]
 
   return(newdta)
