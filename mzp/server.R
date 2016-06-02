@@ -10,7 +10,7 @@ calc_mzp <- function(q330, q355, Qa, kat, obd) {
 }
 
 shinyServer(function(input, output) {
-new_mzp <- reactive({ calc_mzp(input$n, input$kat, input$rok) })
+new_mzp <- reactive({ calc_mzp(input$n, input$nn, input$nnnn, input$kat, input$rok) })
 old_mzp <- reactive({
     X330 <- input$n
     X355 <- input$nn
