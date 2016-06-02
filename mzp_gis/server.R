@@ -3,12 +3,12 @@ library(data.table)
 library(ggplot2)
 library(rgdal)
 
-calc_mzp <- function(q330, kat, obd, exponent, exponent2) {
-    coeffs = list(leto = c(0.65, 0.8, 0.85, 0.9), zima = c(0.85, 1, 1, 1))
+calc_mzp <- function(q330, q355, Qa, kat, obd) {
+    coeffs = list(leto = c(1.1, 1.2, 1.05, 1.07), zima = c(1, 1, 1, 1))
     season = "leto"
-    if (obd == 22 || obd == "zima")
+    if (obd == 22)
         season = "zima"
-    return(((q330^exponent)^exponent2)*coeffs[[season]][as.numeric(kat)])
+    return(((1-(Q355/Qa))*Q330*coeffs[[season]][as.numeric(kat)])
 }
 
 calc_old_mzp <- function(X330, X355, X364) {
