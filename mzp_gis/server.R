@@ -71,14 +71,13 @@ output$plot <- renderPlot({
     kat <- input$kat
     q330 <- input$n
     obd = input$rok
-    exponent= input$expo
-    exponent1= input$expo2
-    
-    if (q330<1) exponent1=1.09 else exponent1=1
-    mzp = calc_mzp(q330, kat, obd, exponent, exponent1)
+    q355 <- input$nn
+    qa  <- input$nnnn
+
+    mzp = calc_mzp(q330, kat, obd, q355, qa)
     
     exponent=0.85
-    mzp3 = calc_mzp(q330, kat, obd, exponent, exponent1)
+    mzp3 = calc_mzp(q330, kat, obd, q355, qa)
     
     rada=seq((q330-0.9*q330),(q330+0.9*q330),by=q330/50)
     
@@ -87,11 +86,9 @@ output$plot <- renderPlot({
     
     for (i in 1:91)
     {
-        mzp1[i] = calc_mzp(rada[i], kat, obd, input$expo, input$expo2)
-    
-        if (rada[i]<1) exponent1=1.09 else exponent1=1
-        exponent=0.85
-        mzp2[i] = calc_mzp(rada[i], kat, obd, exponent, exponent1)
+        mzp1[i] = calc_mzp(rada[i], kat, obd, q355, qa)
+
+        mzp2[i] = calc_mzp(rada[i], kat, obd, q355, qa)
     }
     
     bod = old_mzp()
@@ -109,8 +106,8 @@ output$plot <- renderPlot({
 plot_data <- reactive({
   newdta=as.data.table(read.table('MINprutoky/chmu_stat2.dat', header=TRUE))
   newdta[,K99:=X99/X50]
-  newdta[, MZPleto := round(calc_mzp(X330, KAT, "leto", input$expo, input$expo2), 3)]
-  newdta[, MZPzima := round(calc_mzp(X330, KAT, "zima", input$expo, input$expo2), 3)]
+  newdta[, MZPleto := round(calc_mzp(X330, KAT, "leto", q355, qa), 3)]
+  newdta[, MZPzima := round(calc_mzp(X330, KAT, "zima", q355, qa), 3)]
   newdta[,pomer:=(MZPleto/X50)*100]
   newdta[,pomer_zima:=(MZPzima/X50)*100]
 
@@ -121,8 +118,8 @@ plot_data <- reactive({
   newdta[,rozdil_proc_hlav:=(rozdil_hlavni/MZPold)*100]
   newdta[,rozdil_proc_jaro:=(rozdil_jaro/MZPold)*100]
 
-  newdta[, MZPleto1 := round(calc_mzp(X330, KAT, "leto", 0.85, 1.09), 3)]
-  newdta[, MZPzima1 := round(calc_mzp(X330, KAT, "zima", 0.85, 1.09), 3)]
+  newdta[, MZPleto1 := round(calc_mzp(X330, KAT, "leto", q355, qa), 3)]
+  newdta[, MZPzima1 := round(calc_mzp(X330, KAT, "zima", q355, qa), 3)]
   newdta[,pomer1:=(MZPleto1/X50)*100]
 
   return(newdta)
