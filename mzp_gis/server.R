@@ -106,12 +106,13 @@ output$plot <- renderPlot({
 plot_data <- reactive({
   newdta=as.data.table(read.table('MINprutoky/chmu_stat2.dat', header=TRUE))
   newdta[,K99:=X99/X50]
+  q330 <- input$n
   q355 = input$nn
   qa = input$nnnn
-  newdta[, MZPleto := round(calc_mzp(X330, q355, qa, KAT, "leto"), 3)]
-  newdta[, MZPzima := round(calc_mzp(X330, q355, qa, KAT, "zima"), 3)]
-  newdta[,pomer:=(MZPleto/X50)*100]
-  newdta[,pomer_zima:=(MZPzima/X50)*100]
+  newdta[, MZPleto := round(calc_mzp(q330, q355, qa, KAT, "leto"), 3)]
+  newdta[, MZPzima := round(calc_mzp(q330, q355, qa, KAT, "zima"), 3)]
+  newdta[,pomer:=(MZPleto/AVG)*100]
+  newdta[,pomer_zima:=(MZPzima/AVG)*100]
 
   newdta[, MZPold := calc_old_mzp(X330, X355, X364)]
 
@@ -120,9 +121,9 @@ plot_data <- reactive({
   newdta[,rozdil_proc_hlav:=(rozdil_hlavni/MZPold)*100]
   newdta[,rozdil_proc_jaro:=(rozdil_jaro/MZPold)*100]
 
-  newdta[, MZPleto1 := round(calc_mzp(X330, q355, qa, KAT, "leto"), 3)]
-  newdta[, MZPzima1 := round(calc_mzp(X330, q355, qa, KAT, "zima"), 3)]
-  newdta[,pomer1:=(MZPleto1/X50)*100]
+  newdta[, MZPleto1 := round(calc_mzp(q330, q355, qa, KAT, "leto"), 3)]
+  newdta[, MZPzima1 := round(calc_mzp(q330, q355, qa, KAT, "zima"), 3)]
+  newdta[,pomer1:=(MZPleto1/AVG)*100]
 
   return(newdta)
 })
